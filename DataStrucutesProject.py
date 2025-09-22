@@ -289,6 +289,7 @@ class Post:
         self.postID = postID
         self.post_contant = contant
         self.likersIDs = set()
+        self.likers_order = []
         
 # main functions
 def quit_program():
@@ -370,8 +371,33 @@ def present_post(): # find in hash
     
     print("here is the post")
     
-def like_post(): # list
+def like_post():  # add a like to a post
+    liker_pid = input("Your ProfileID (liker): ").strip()
+    liker = does_profile_exist(liker_pid)
+    if liker is None:
+        print("liker profile does not exist")
+        return
+
+    post_id = input("PostID to like: ").strip()
+    post = does_post_exist(post_id)
+    if post is None:
+        print("post does not exist")
+        return
+
+    #avoid self-liking
+    if post.posterID == liker_pid:
+        print("cannot like your own post")
+        return
+
+    if liker_pid in post.likersIDs:
+        print("already liked")
+        return
+
+    post.likersIDs.add(liker_pid)     
+    post.likers_order.append(liker_pid)  
+    liker.likes.add(post_id)        
     print("post liked")
+
 
 # utility functions
 def does_profile_exist(pid):
