@@ -279,7 +279,8 @@ class Profile:
         self.friends = set()
         self.posts = set()
         self.likes = set()
-        
+        self.received_likes = {}  # dict[post_id -> set[liker_pid]]
+
     def __str__(self):
         return f"Profile(ID: {self.profileID}, Name: {self.name} Surname: {self.surname}, Email: {self.email})"
              
@@ -370,8 +371,49 @@ def present_post(): # find in hash
     
     print("here is the post")
     
-def like_post(): # list
-    print("post liked")
+def add_like_for_post(receiver_pid: str, post_id: str, liker_pid: str):
+    receiver = does_profile_exist(receiver_pid)
+    liker    = does_profile_exist(liker_pid)
+    if receiver is None:
+        return False, "receiver user not found"
+    if liker is None:
+        return False, "liker user not found"
+
+    post = does_post_exist(post_id)
+    if post is None:
+        return False, "post not found"
+
+    # verify ownership
+    if post.posterID != receiver_pid:
+        return False, "post does not belong to receiver user"
+
+    # block self-like
+    if receiver_pid == liker_pid:
+        return False, "cannot like your own post"
+
+    # prevent duplicates
+    if liker_pid in post.likersIDs:
+        return False, "already liked"
+
+    # updates
+    post.likersIDs.add(liker_pid)
+    if hasattr(post, "likers_order"):
+        post.likers_order.append(liker_pid)
+
+    liker.likes.add(post_id)
+
+    s = receiver.received_likes.setdefault(post.postID, set())
+    s.add(liker_pid)
+
+    return True, "like added"
+def like_post():
+    receiver_pid = input("Receiver (post owner) ProfileID: ").strip()
+    post_id      = input("PostID to like: ").strip()
+    liker_pid    = input("Liker ProfileID: ").strip()
+
+    ok, msg = add_like_for_post(receiver_pid, post_id, liker_pid)
+    print(msg)
+
 
 # utility functions
 def does_profile_exist(pid):
